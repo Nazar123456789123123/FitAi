@@ -1,0 +1,50 @@
+<resources>
+    <string name="app_name">FitAI</string>
+
+    <!-- Navigation -->
+    <string name="nav_overview">Огляд</string>
+    <string name="nav_record">Запис</string>
+    <string name="nav_journal">Журнал</string>
+    <string name="nav_science">Наука</string>
+    <string name="nav_coach">AI-Тренер</string>
+
+    <!-- Auth -->
+    <string name="auth_badge">FITAI • ПРИРОДНА ГІПЕРТРОФІЯ</string>
+    <string name="auth_title">Розумний трекер для натуральних атлетів</string>
+    <string name="auth_subtitle">Відстежуй силові, біг і плавання, контролюй RPE 1–10 та тижневий обсяг MEV/MAV/MRV за найновішими дослідженнями.</string>
+    <string name="auth_google_button">Увійти через Google</string>
+    <string name="auth_signing_in">Вхід у профіль…</string>
+    <string name="auth_error_missing_config">Не знайдено default_web_client_id для Google Sign-In.</string>
+
+    <!-- Actions & Common -->
+    <string name="action_add_workout">Записати тренування</string>
+    <string name="action_save">Зберегти</string>
+    <string name="action_update">Оновити</string>
+    <string name="action_cancel">Скасувати</string>
+    <string name="action_delete">Видалити</string>
+    <string name="action_edit">Редагувати</string>
+    <string name="action_sign_out">Вийти</string>
+    <string name="action_analyze_week">AI-аналіз мого тижня</string>
+
+    <!-- Workout Modalities -->
+    <string name="type_strength">Силові</string>
+    <string name="type_running">Біг</string>
+    <string name="type_swimming">Плавання</string>
+
+    <!-- Form Labels -->
+    <string name="field_workout_type">Тип вправи</string>
+    <string name="field_title">Назва тренування</string>
+    <string name="field_duration">Тривалість (хв)</string>
+    <string name="field_distance">Дистанція</string>
+    <string name="unit_km">км</string>
+    <string name="unit_m">м</string>
+    <string name="field_rpe">Суб\'єктивна інтенсивність (RPE 1–10)</string>
+    <string name="field_muscle_group">Цільова група м\'язів</string>
+    <string name="field_working_sets">Робочі підходи</string>
+    <string name="field_notes">Нотатки (відновлення, пампінг, прогресія)</string>
+
+    <!-- Validation Errors -->
+    <string name="error_title_required">Вкажіть назву тренування (до 100 символів).</string>
+    <string name="error_duration_range">Тривалість має бути від 1 до 600 хвилин.</string>
+    <string name="error_distance_range">Дистанція має бути від 0 до 500 000.</string>
+</resources>

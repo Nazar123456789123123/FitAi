@@ -1,0 +1,226 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidAthleteProfile(data) {
+      return data.userId is string &&
+             data.userId == request.auth.uid &&
+             data.displayName is string &&
+             data.displayName.size() >= 1 &&
+             data.displayName.size() <= 80 &&
+             data.bodyWeightKg is number &&
+             data.bodyWeightKg >= 30.0 &&
+             data.bodyWeightKg <= 250.0 &&
+             data.ageYears is int &&
+             data.ageYears >= 14 &&
+             data.ageYears <= 90 &&
+             data.heightCm is int &&
+             data.heightCm >= 120 &&
+             data.heightCm <= 230 &&
+             data.trainingExperience in ['BEGINNER', 'INTERMEDIATE', 'ADVANCED'] &&
+             data.primaryGoal in ['HYPERTROPHY', 'RECOMPOSITION', 'ENDURANCE_HYBRID'] &&
+             data.equipment in ['BODYWEIGHT', 'DUMBBELLS', 'HOME_GYM', 'GYM'] &&
+             data.focusMuscles is list &&
+             data.focusMuscles.size() <= 8 &&
+             (data.focusMuscles.size() == 0 || data.focusMuscles[0] is string) &&
+             data.weeklyTargetSessions is int &&
+             data.weeklyTargetSessions >= 1 &&
+             data.weeklyTargetSessions <= 14 &&
+             data.onboardingDone is bool;
+    }
+
+    function isValidWorkoutLog(data) {
+      return data.userId is string &&
+             data.userId == request.auth.uid &&
+             data.type in ['RUNNING', 'SWIMMING', 'STRENGTH'] &&
+             data.title is string &&
+             data.title.size() >= 1 &&
+             data.title.size() <= 100 &&
+             data.durationMinutes is int &&
+             data.durationMinutes >= 1 &&
+             data.durationMinutes <= 600 &&
+             data.distanceValue is number &&
+             data.distanceValue >= 0.0 &&
+             data.distanceValue <= 500000.0 &&
+             data.distanceUnit in ['KM', 'M'] &&
+             data.rpe is int &&
+             data.rpe >= 1 &&
+             data.rpe <= 10 &&
+             data.muscleGroup in ['NONE', 'CHEST', 'BACK', 'QUADS', 'HAMSTRINGS', 'SHOULDERS', 'ARMS', 'CORE', 'FULL_BODY'] &&
+             data.workingSets is int &&
+             data.workingSets >= 0 &&
+             data.workingSets <= 60 &&
+             data.rir is int &&
+             data.rir >= 0 &&
+             data.rir <= 5 &&
+             data.sessionLoadSrpe is int &&
+             data.sessionLoadSrpe >= 1 &&
+             data.sessionLoadSrpe <= 6000 &&
+             data.notes is string &&
+             data.notes.size() <= 500 &&
+             data.performedAtMillis is int &&
+             data.performedAtMillis >= 1;
+    }
+
+    function isValidAiInsight(data) {
+      return data.userId is string &&
+             data.userId == request.auth.uid &&
+             data.summary is string &&
+             data.summary.size() >= 1 &&
+             data.summary.size() <= 2000 &&
+             data.volumeStatus is string &&
+             data.volumeStatus.size() >= 1 &&
+             data.volumeStatus.size() <= 160 &&
+             data.recoveryAdvice is string &&
+             data.recoveryAdvice.size() >= 1 &&
+             data.recoveryAdvice.size() <= 1200 &&
+             data.nextWorkoutPlan is string &&
+             data.nextWorkoutPlan.size() >= 1 &&
+             data.nextWorkoutPlan.size() <= 1200;
+    }
+
+    match /users/{userId} {
+      allow get: if isOwner(userId) && isValidId(userId);
+      allow list: if false;
+
+      allow create: if isOwner(userId) &&
+                       isValidId(userId) &&
+                       incoming().keys().hasAll([
+                         'userId', 'displayName', 'bodyWeightKg', 'ageYears', 'heightCm',
+                         'trainingExperience', 'primaryGoal', 'equipment', 'focusMuscles',
+                         'weeklyTargetSessions', 'onboardingDone', 'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'displayName', 'bodyWeightKg', 'ageYears', 'heightCm',
+                         'trainingExperience', 'primaryGoal', 'equipment', 'focusMuscles',
+                         'weeklyTargetSessions', 'onboardingDone', 'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().createdAt is timestamp &&
+                       incoming().createdAt <= request.time &&
+                       incoming().updatedAt is timestamp &&
+                       incoming().updatedAt <= request.time &&
+                       isValidAthleteProfile(incoming());
+
+      allow update: if isSignedIn() &&
+                       isValidAthleteProfile(incoming()) &&
+                       request.auth.uid == userId &&
+                       isValidId(userId) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().updatedAt is timestamp &&
+                       incoming().updatedAt <= request.time &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'displayName', 'bodyWeightKg', 'ageYears', 'heightCm',
+                         'trainingExperience', 'primaryGoal', 'equipment', 'focusMuscles',
+                         'weeklyTargetSessions', 'onboardingDone', 'updatedAt'
+                       ]);
+
+      allow delete: if isOwner(userId) && isValidId(userId);
+
+      match /workouts/{workoutId} {
+        allow get: if isOwner(userId) && isValidId(workoutId);
+        allow list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(workoutId) &&
+                         incoming().keys().hasAll([
+                           'userId', 'type', 'title', 'durationMinutes',
+                           'distanceValue', 'distanceUnit', 'rpe', 'muscleGroup',
+                           'workingSets', 'rir', 'sessionLoadSrpe', 'notes',
+                           'performedAtMillis', 'createdAt', 'updatedAt'
+                         ]) &&
+                         incoming().keys().hasOnly([
+                           'userId', 'type', 'title', 'durationMinutes',
+                           'distanceValue', 'distanceUnit', 'rpe', 'muscleGroup',
+                           'workingSets', 'rir', 'sessionLoadSrpe', 'notes',
+                           'performedAtMillis', 'createdAt', 'updatedAt'
+                         ]) &&
+                         incoming().createdAt is timestamp &&
+                         incoming().createdAt <= request.time &&
+                         incoming().updatedAt is timestamp &&
+                         incoming().updatedAt <= request.time &&
+                         isValidWorkoutLog(incoming());
+
+        allow update: if isSignedIn() &&
+                         isValidWorkoutLog(incoming()) &&
+                         request.auth.uid == userId &&
+                         isValidId(workoutId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().updatedAt is timestamp &&
+                         incoming().updatedAt <= request.time &&
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'type', 'title', 'durationMinutes',
+                           'distanceValue', 'distanceUnit', 'rpe', 'muscleGroup',
+                           'workingSets', 'rir', 'sessionLoadSrpe', 'notes',
+                           'performedAtMillis', 'updatedAt'
+                         ]);
+
+        allow delete: if isOwner(userId) && isValidId(workoutId);
+      }
+
+      match /ai_insights/{insightId} {
+        allow get: if isOwner(userId) && isValidId(insightId);
+        allow list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(insightId) &&
+                         incoming().keys().hasAll([
+                           'userId', 'summary', 'volumeStatus',
+                           'recoveryAdvice', 'nextWorkoutPlan',
+                           'createdAt', 'updatedAt'
+                         ]) &&
+                         incoming().keys().hasOnly([
+                           'userId', 'summary', 'volumeStatus',
+                           'recoveryAdvice', 'nextWorkoutPlan',
+                           'createdAt', 'updatedAt'
+                         ]) &&
+                         incoming().createdAt is timestamp &&
+                         incoming().createdAt <= request.time &&
+                         incoming().updatedAt is timestamp &&
+                         incoming().updatedAt <= request.time &&
+                         isValidAiInsight(incoming());
+
+        allow update: if isSignedIn() &&
+                         isValidAiInsight(incoming()) &&
+                         request.auth.uid == userId &&
+                         isValidId(insightId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().updatedAt is timestamp &&
+                         incoming().updatedAt <= request.time &&
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'summary', 'volumeStatus', 'recoveryAdvice',
+                           'nextWorkoutPlan', 'updatedAt'
+                         ]);
+
+        allow delete: if isOwner(userId) && isValidId(insightId);
+      }
+    }
+  }
+}

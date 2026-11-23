@@ -1,0 +1,142 @@
+{
+  "entities": {
+    "AthleteProfile": {
+      "title": "AthleteProfile",
+      "description": "Natural athlete biometrics, equipment, focus muscles, and hypertrophy/hybrid goals.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Firebase Auth UID of the athlete" },
+        "displayName": { "type": "string", "description": "Athlete display name" },
+        "bodyWeightKg": { "type": "number", "description": "Body weight in kilograms (30.0 - 250.0)" },
+        "ageYears": { "type": "integer", "description": "Athlete age in years (14 - 90)" },
+        "heightCm": { "type": "integer", "description": "Athlete height in centimeters (120 - 230)" },
+        "trainingExperience": {
+          "type": "string",
+          "enum": ["BEGINNER", "INTERMEDIATE", "ADVANCED"],
+          "description": "Natural training age tier"
+        },
+        "primaryGoal": {
+          "type": "string",
+          "enum": ["HYPERTROPHY", "RECOMPOSITION", "ENDURANCE_HYBRID"],
+          "description": "Primary athletic objective"
+        },
+        "equipment": {
+          "type": "string",
+          "enum": ["BODYWEIGHT", "DUMBBELLS", "HOME_GYM", "GYM"],
+          "description": "Available training equipment"
+        },
+        "focusMuscles": {
+          "type": "array",
+          "description": "Priority muscle group codes (max 8)"
+        },
+        "weeklyTargetSessions": { "type": "integer", "description": "Planned sessions per week (1 - 14)" },
+        "onboardingDone": { "type": "boolean", "description": "Whether initial athlete onboarding is completed" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp (FieldValue.serverTimestamp())" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp (FieldValue.serverTimestamp())" }
+      },
+      "required": [
+        "userId",
+        "displayName",
+        "bodyWeightKg",
+        "ageYears",
+        "heightCm",
+        "trainingExperience",
+        "primaryGoal",
+        "equipment",
+        "focusMuscles",
+        "weeklyTargetSessions",
+        "onboardingDone",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "WorkoutLog": {
+      "title": "WorkoutLog",
+      "description": "Logged athlete training session across running, swimming, or strength with duration, distance, and RPE 1-10.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Owner Firebase Auth UID" },
+        "type": {
+          "type": "string",
+          "enum": ["RUNNING", "SWIMMING", "STRENGTH"],
+          "description": "Workout modality"
+        },
+        "title": { "type": "string", "description": "Session title" },
+        "durationMinutes": { "type": "integer", "description": "Duration in minutes (1 - 600)" },
+        "distanceValue": { "type": "number", "description": "Distance value (0.0 - 500000.0)" },
+        "distanceUnit": {
+          "type": "string",
+          "enum": ["KM", "M"],
+          "description": "Distance unit (kilometers or meters)"
+        },
+        "rpe": { "type": "integer", "description": "Rate of Perceived Exertion (1 - 10)" },
+        "muscleGroup": {
+          "type": "string",
+          "enum": ["NONE", "CHEST", "BACK", "QUADS", "HAMSTRINGS", "SHOULDERS", "ARMS", "CORE", "FULL_BODY"],
+          "description": "Primary muscle group targeted for hypertrophy tracking"
+        },
+        "workingSets": { "type": "integer", "description": "Effective working sets completed (0 - 60)" },
+        "rir": { "type": "integer", "description": "Reps in Reserve average (0 - 5)" },
+        "sessionLoadSrpe": { "type": "integer", "description": "Session RPE load = durationMinutes * rpe" },
+        "notes": { "type": "string", "description": "Optional training notes (0 - 500 chars)" },
+        "performedAtMillis": { "type": "integer", "description": "Epoch milliseconds when workout was performed" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp (FieldValue.serverTimestamp())" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp (FieldValue.serverTimestamp())" }
+      },
+      "required": [
+        "userId",
+        "type",
+        "title",
+        "durationMinutes",
+        "distanceValue",
+        "distanceUnit",
+        "rpe",
+        "muscleGroup",
+        "workingSets",
+        "rir",
+        "sessionLoadSrpe",
+        "notes",
+        "performedAtMillis",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "AiCoachInsight": {
+      "title": "AiCoachInsight",
+      "description": "Evidence-based natural hypertrophy AI Coach analysis persisted per athlete.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Owner Firebase Auth UID" },
+        "summary": { "type": "string", "description": "Overall assessment of training week" },
+        "volumeStatus": { "type": "string", "description": "MEV/MAV/MRV weekly volume status" },
+        "recoveryAdvice": { "type": "string", "description": "Interference effect, RPE/RIR & recovery guidance" },
+        "nextWorkoutPlan": { "type": "string", "description": "Concrete next session recommendation" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp (FieldValue.serverTimestamp())" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp (FieldValue.serverTimestamp())" }
+      },
+      "required": [
+        "userId",
+        "summary",
+        "volumeStatus",
+        "recoveryAdvice",
+        "nextWorkoutPlan",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/AthleteProfile" },
+      "description": "Authenticated athlete profile and baseline natural bodybuilding parameters."
+    },
+    "/users/{userId}/workouts/{workoutId}": {
+      "schema": { "$ref": "#/entities/WorkoutLog" },
+      "description": "Authenticated athlete's logged workouts across running, swimming, and strength."
+    },
+    "/users/{userId}/ai_insights/{insightId}": {
+      "schema": { "$ref": "#/entities/AiCoachInsight" },
+      "description": "Saved Gemini AI Coach science-backed training analyses."
+    }
+  }
+}
